@@ -1,7 +1,5 @@
 from django.db import models
 
-# Create your models here.
-
 class Course (models.Model):
     name = models.CharField(max_length=2000)
     description = models.TextField(default='N/A', blank=True, null=True)
@@ -45,4 +43,9 @@ class Query(models.Model):
     date_modified=models.DateTimeField(auto_now=True, null=True, blank=True)
     author=models.ForeignKey('users.IMUser', on_delete=models.CASCADE)
 
-# QueryComment (query [should reference Query model], comment, date_created, date_modified, author [should reference IMUser model])
+class QueryComment(models.Model):
+    query=models.ForeignKey(Query, on_delete=models.CASCADE)
+    comment=models.TextField(default="N/A")
+    date_created=models.DateTimeField(auto_now_add=True)
+    date_modified=models.DateTimeField(auto_now=True, null=True, blank=True)
+    author=models.ForeignKey('users.IMUser', on_delete=models.CASCADE)
