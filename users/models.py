@@ -1,7 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+# from django.contrib.auth.models import AbstractUser
 
-class IMUser (AbstractUser):
+class IMUser (models.Model):
     USER_TYPE_CHOICES = (
       (1, 'EIT'),
       (2, 'TEACHING_FELLOW'),
@@ -14,8 +14,6 @@ class IMUser (AbstractUser):
     is_active = models.BooleanField(default = False)
     user_type = models.PositiveSmallIntegerField(choices=USER_TYPE_CHOICES)
     email = models.EmailField(unique = True, max_length = 50)
-    username = None
-    USERNAME_FIELD = 'email'
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True, blank=True, null=True)
 
