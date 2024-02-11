@@ -21,7 +21,7 @@ class IMUser (AbstractUser):
 
 class Cohort (models.Model):
     name = models.CharField(max_length=50)
-    description = models.CharField(max_length=500)
+    description = models.TextField(default='N/A')
     year = models.PositiveIntegerField(max_length=5)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
@@ -35,7 +35,3 @@ class CohortMember(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True, blank=True, null=True)
     author=models.ForeignKey(IMUser, on_delete=models.CASCADE)
-
-# IMUser (first_name, last_name, is_active, user_type [EIT, TEACHING_FELLOW, ADMIN_STAFF, ADMIN], date_created). Feel free to add extra fields you can think of. Custom user  management/auth implementation will be done later
-# Cohort(name, description, year, start_date, end_date, is_active, date_created, date_modified, author [should reference IMUser model])
-# CohorMember(cohort[Should reference Cohort model], member [should reference IMUser], is_active, date_created, date_modified, author [should reference IMUser model])
