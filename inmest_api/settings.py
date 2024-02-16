@@ -52,6 +52,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'inmest_api.urls'
+AUTH_USER_MODEL = 'users.IMUser'
 
 TEMPLATES = [
     {
