@@ -19,8 +19,15 @@ class ClassSchedule(models.Model):
         ('WEEKLY', 'Weekly'),
         ('MONTHLY', 'Monthly'),
     )
+
+    MEETING_TYPES = (
+        ('CLASS_SESSION', 'Class Session'),
+        ('WELLNESS_SESSION', 'Wellness Session'),
+        ('GUEST_LECTURE', 'Guest Lecture'),
+    )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    meeting_type = models.CharField(max_length=20, choices=MEETING_TYPES, default='CLASS_SESSION')
     start_date_and_time = models.DateTimeField()
     end_date_and_time = models.DateTimeField()
     is_repeated = models.BooleanField(default=False)
@@ -28,7 +35,11 @@ class ClassSchedule(models.Model):
     is_active = models.BooleanField(default=True)
     organizer = models.ForeignKey(IMUser, on_delete=models.CASCADE, related_name='organized_classes')  
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE, related_name='class_schedules') 
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, related_name='related_class_schedules', blank=True, null=True)
+    facilitator = models.ForeignKey(IMUser, on_delete=models.SET_NULL, related_name='facilitated_classes', blank=True, null=True)
     venue = models.CharField(max_length=255, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    date_modified = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     def __str__(self):
         return f"{self.title} ({self.cohort.name})"
@@ -39,8 +50,7 @@ class ClassAttendance(models.Model):
     is_present = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
-    author = models.ForeignKey(IMUser, on_delete=models.CASCADE)  # Assuming IMUser from Part 1
-    
+    author = models.ForeignKey(IMUser, on_delete=models.CASCADE)  
 
     def __str__(self):
         return f"{self.class_schedule.title}: {self.attendee.first_name} {self.attendee.last_name}"
