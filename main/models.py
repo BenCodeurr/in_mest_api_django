@@ -1,5 +1,4 @@
 from django.db import models
-import datetime
 from users.models import *
 
 

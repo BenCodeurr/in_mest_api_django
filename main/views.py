@@ -50,6 +50,7 @@ class QueryView(View):
 
 @api_view(['GET'])
 def fetch_class_schedule(request):
+    print("user making resquest", request.user)
     # 1. Retreive from DB all class schedules
     queryset = ClassSchedule.objects.all()
 
