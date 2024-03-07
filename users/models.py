@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 from rest_framework.authtoken.models import Token
 
 class IMUser(AbstractUser):
@@ -12,6 +14,7 @@ class IMUser(AbstractUser):
     first_name = models.CharField(max_length=155, blank=True)
     last_name = models.CharField(max_length=155, blank=True)
     middle_name = models.CharField(max_length=155, blank=True)
+    unique_code = models.CharField(max_length=20, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='EIT')
     date_modified = models.DateTimeField(auto_now=True)
@@ -20,8 +23,10 @@ class IMUser(AbstractUser):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
     
-    def generate_auth_token(self):
-        token = Token.objects.create(user=self)
+@receiver(post_save, sender=IMUser)
+def generate_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        token = Token.objects.create(user=instance)
         token.save()
 
 class Cohort(models.Model):
