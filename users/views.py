@@ -31,7 +31,7 @@ def signup(request):
     new_user.set_password(password)
     new_user.save()
     # new_user.generate_auth_token()
-    serializer = UserSerializer(new_user, many=False)
+    serializer = AuthSerializer(new_user, many=False)
     return Response({"message": "Account successfully created", "result": serializer.data})
 
 @api_view(['POST'])
@@ -51,12 +51,25 @@ def user_login(request):
         #3. Check user authentication
         auth_user = authenticate(username=username, password=password)
         if auth_user:
+            if not auth_user.is_active:
+                return Response({"error": "Your account is not active. Kindly reach out to the support team"}, status.HTTP_403_FORBIDDEN)
+            user.temporal_login_fail = 0
+            user.save()
+
             login(request, user)
             serializer = AuthSerializer(user, many=False)
             return Response({"result": serializer.data}, status.HTTP_200_OK)
 
         else:
-            return Response({"error": "Invalid credentials"}, status.HTTP_400_BAD_REQUEST)
+            if user.temporal_login_fail >= 5:
+                user.is_active = False
+                user.permanent_login_fail = 1
+                user.save()
+                return Response({"error": "Your account has been deactivated. Kindly reach out to the support team"}, status.HTTP_403_FORBIDDEN)
+            
+            user.temporal_login_fail += 1
+            user.save()
+            return generate_400_response("Incorrect username or password")
 
     except IMUser.DoesNotExist:
         return Response({"error": "User does not exist"}, status.HTTP_404_NOT_FOUND)
@@ -65,6 +78,7 @@ def user_login(request):
     #5. Respond to the users request
 
 class ForgotPasswordAPIView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         #1. Receive the username(email)
         username = request.data.get('username')
@@ -87,4 +101,49 @@ class ForgotPasswordAPIView(APIView):
 
         except IMUser.DoesNotExist:
             generate_400_response("User does not exist")
+
+
+class ResetPasswordApiView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        unique_code = request.data.get("unique_code")
+        password = request.data.get("password")
+
+        if not email or not unique_code or not password:
+            return generate_400_response("Kindly provide email, unique code and password")
+        
+        try:
+            user = IMUser.objects.get(Q(username=email) | Q(email=email))
+            if user.unique_code != unique_code:
+                return generate_400_response("Unique code is invalid")
+            
+            user.set_password(password)
+            user.unique_code = ""
+            user.save()
+            return Response({"detail": "Password successfully reset"}, status.HTTP_200_OK)
+        except IMUser.DoesNotExist:
+            return generate_400_response("User does not exist")
+        
+class ChangePasswordApiView(APIView):
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+
+        if not old_password or not new_password:
+            return generate_400_response("Kindly provide old password and new password")
+        
+        if not user.check_password(old_password):
+            return generate_400_response("Old password is incorrect")
+        
+        user.set_password(new_password)
+        user.save()
+        return Response({"detail": "Password successfully changed"}, status.HTTP_200_OK)
+        
+
+class GetCurrentUserProfile(APIView):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = AuthSerializer(user, many=False)
+        return Response(serializer.data, status.HTTP_200_OK)
 
