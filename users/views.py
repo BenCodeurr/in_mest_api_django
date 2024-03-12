@@ -144,6 +144,8 @@ class ChangePasswordApiView(APIView):
 class GetCurrentUserProfile(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
-        serializer = AuthSerializer(user, many=False)
+        serializer = UserSerializer(user, many=False, context={'request': request})
         return Response(serializer.data, status.HTTP_200_OK)
+    
+
 
