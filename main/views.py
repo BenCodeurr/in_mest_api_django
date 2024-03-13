@@ -4,10 +4,12 @@ from django.views import View
 from rest_framework import status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
+from inmest_api.utils import *
 from main.models import *
 from main.serializers import *
 import datetime
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 
 def json_response(request):
@@ -124,7 +126,33 @@ def create_class_schedule(request):
 
 
 
-class QueryModelView(viewsets.ModelViewSet):
+class QueryModelViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def raise_query(self, request):
-        pass
+        title = request.data.get('title')
+        description = request.data.get('description', None)
+        query_type = request.data.get('query_type',None)
+        assignee = None
+
+        query = Query.objects.create(
+            title=title,
+            description=description,
+            query_type=query_type,
+            submitted_by=request.user
+        )
+        query.save()
+        #send email to the assignee
+        return Response({'message': 'Query successfully submitted'})
+    
+    @action(detail=False, methods=['post'])
+    def filter_queries(self, request):
+        search_text = request.data.get('search_text')
+        status = request.data.get('status')
+        paginator = PageNumberPagination()
+
+        queryset = Query.objects.all()
+        serializer = QuerySerializer(paginator.paginate_queryset(queryset, request), many=True)
+        return paginator.get_paginated_response(serializer.data)
+     
+class ClassModelViewSet(viewsets.ModelViewSet):
+    pass
